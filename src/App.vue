@@ -68,12 +68,14 @@ export default {
   },
 
   methods: {
+    /**
+     * Fetch the data & extract required fields. Then store it to vuex
+     */
     fetchCoinsData() {
       const coins = [];
       const url = "https://api.coinranking.com/v1/public/coins/?limit=100";
       Axios.get(url)
         .then((response) => {
-          window.r = response;
           if (response.data.data.coins.length) {
             const currency = response.data.data.base.sign;
             response.data.data.coins.forEach((coin) => {
@@ -86,6 +88,7 @@ export default {
               });
             });
             this.$store.commit("SET_COINS_DATA", [...coins]);
+            // if user opted to refresh, show success message
             if (this.isRefreshing) {
               this.openSnackBar("Data Refreshed", "success");
               this.isRefreshing = false;
@@ -94,6 +97,10 @@ export default {
         })
         .catch((error) => {
           let message = "";
+          /**
+           * If there's no data shown or user opted to refresh, then check for error & show  message
+           * else just keep on displaying old data
+           */
           if (!this.$store.state.coins.length || this.isRefreshing) {
             if (!error.response && error.message === "Network Error") {
               message = "Please Check your Internet Connection";
@@ -106,17 +113,20 @@ export default {
         });
     },
 
+    // Refresh data when user opt to do it
     refreshData() {
       this.isRefreshing = true;
       this.fetchCoinsData();
     },
 
+    // set a refresh interval of 20 sec to refresh data
     setRefreshInterval() {
       this.refreshInterval = setInterval(() => {
         this.fetchCoinsData();
       }, 20 * 1000);
     },
 
+    // open snackbar to display proper message with status of success or failure
     openSnackBar(message, status) {
       this.showSnackbar = true;
       this.message = message;
@@ -124,6 +134,7 @@ export default {
     },
   },
 
+  // clear interval
   beforeDestroy() {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
